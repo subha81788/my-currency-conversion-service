@@ -16,7 +16,7 @@ public class CurrencyService {
     }
 
     public int updateCurrency(CurrencyBean currency) {
-        return currencyRepository.setCurrencyBeanBySymbol(currency.getSymbol(),currency.getFullName());
+        return currencyRepository.updateCurrencyBeanBySymbol(currency.getSymbol(),currency.getFullName());
     }
 
     public void deleteAllInBatch() {

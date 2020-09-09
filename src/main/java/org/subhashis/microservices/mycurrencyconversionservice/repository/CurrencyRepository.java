@@ -15,5 +15,5 @@ public interface CurrencyRepository extends JpaRepository<CurrencyBean,String> {
     @Transactional
     @Modifying
     @Query("update CurrencyBean c set c.fullName = :fullName where c.symbol = :symbol")
-    public int setCurrencyBeanBySymbol(@Param("symbol") String symbol, @Param("fullName") String fullName);
+    public int updateCurrencyBeanBySymbol(@Param("symbol") String symbol, @Param("fullName") String fullName);
 }

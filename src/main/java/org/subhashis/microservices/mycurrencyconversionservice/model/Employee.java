@@ -6,31 +6,33 @@ import javax.validation.constraints.NotNull;
 @Entity
 public class Employee {
     @NotNull
-    @Id
-    private String id;
+    @EmbeddedId
+    private EmployeeIdentity id;
+
     private String name;
+
     @Embedded
     private Address address;
 
     @ManyToOne(fetch=FetchType.EAGER)
-    @JoinColumn(name = "emp_currency")
+    @JoinColumn(name = "currency_symbol")
     private CurrencyBean currency;
 
     public Employee() {
     }
 
-    public Employee(String id, String name, Address address, CurrencyBean currency) {
+    public Employee(EmployeeIdentity id, String name, Address address, CurrencyBean currency) {
         this.id = id;
         this.name = name;
         this.address = address;
         this.currency = currency;
     }
 
-    public String getId() {
+    public EmployeeIdentity getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(EmployeeIdentity id) {
         this.id = id;
     }
 
