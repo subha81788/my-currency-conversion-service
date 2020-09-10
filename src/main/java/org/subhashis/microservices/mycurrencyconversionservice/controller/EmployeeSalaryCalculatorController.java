@@ -4,18 +4,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.subhashis.microservices.mycurrencyconversionservice.exception.EmployeeNotFoundException;
 import org.subhashis.microservices.mycurrencyconversionservice.model.Employee;
 import org.subhashis.microservices.mycurrencyconversionservice.service.EmployeeService;
 
 import javax.persistence.EntityNotFoundException;
 import javax.validation.constraints.NotNull;
+import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 public class EmployeeSalaryCalculatorController {
@@ -33,28 +37,68 @@ public class EmployeeSalaryCalculatorController {
 
     @GetMapping(path = "/employees")
     public List<Employee> getAllEmployees() {
-        return employeeService.findAll();
+        return this.employeeService.findAll();
     }
 
-    @GetMapping(path = "/employeesById")
-    public List<Employee> getEmployeesById(@RequestParam("accountId") String accountId, @RequestParam("individualId") String individualId) {
-        if(StringUtils.isEmpty(accountId) || StringUtils.isEmpty(individualId)) {
+    @GetMapping(path = {"/employees/{accountId}/{individualId}", "/employeeById"} )
+    public Employee getEmployeeById(@PathVariable("accountId") Optional<String> accId,
+                                    @PathVariable("individualId") Optional<String> indId,
+                                    @RequestParam("accId") Optional<String> accountId,
+                                    @RequestParam("indId") Optional<String> individualId) {
+        String accIdVal = null;
+        String indIdVal = null;
+        if(accountId.isPresent() && individualId.isPresent()) {
+            accIdVal = accountId.get();
+            indIdVal = individualId.get();
+        } else if(accId.isPresent() && indId.isPresent()) {
+            accIdVal = accId.get();
+            indIdVal = indId.get();
+        } else {
             throw new IllegalArgumentException("AccountId or InvidualId is not specified");
         }
-        return employeeService.findById(accountId,individualId).orElseThrow(() -> new EntityNotFoundException("Requested employee not found"));
+        logger.info("accountId=" + accIdVal + "\tindividualId=" + indIdVal);
+        return this.employeeService.findById(accIdVal,indIdVal)
+                .orElseThrow(() -> new EntityNotFoundException("Requested employee not found")).get(0);
     }
 
-
     @GetMapping(path = "/employeesByAccountId/{accountId}")
-    public List<Employee> getEmployeesByAccountId(@PathVariable("accountId") String accountId) {
+    public List<Employee> getEmployeesByAccountId(@PathVariable("accountId") @Validated String accountId) {
         if(StringUtils.isEmpty(accountId)) {
             throw new IllegalArgumentException("AccountId is not specified");
         }
-        return employeeService.findByAccountId(accountId).orElseThrow(() -> new EntityNotFoundException("Requested employee account not found"));
+        return this.employeeService.findByAccountId(accountId)
+                .orElseThrow(() -> new EntityNotFoundException("Requested employee account not found"));
     }
 
-    @PostMapping(path = "/employees", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(path = "/employees",
+            consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Employee> createEmployee(@RequestBody @NotNull Employee employee) {
-        return new ResponseEntity<>(employeeService.add(employee), HttpStatus.CREATED);
+        var employeeList = this.employeeService.findById(employee.getId().getAccountId(),employee.getId().getIndividualId());
+        employeeList.ifPresent(e -> { throw new IllegalArgumentException("Employee cannot be created. Employee with given id already exists"); });
+        var emp = this.employeeService.add(employee);
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest().path("/{accountId}/{individualId}")
+                .buildAndExpand(emp.getId().getAccountId(),emp.getId().getIndividualId())
+                .toUri();
+        return ResponseEntity.created(location).build();
     }
+
+    @PutMapping(path = "/employees",
+            consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> updateEmployee(@RequestBody @NotNull Employee employee) {
+        var employeeList = this.employeeService.findById(employee.getId().getAccountId(),employee.getId().getIndividualId());
+        employeeList.ifPresentOrElse(e -> this.employeeService.update(employee),
+                () -> { throw new EmployeeNotFoundException("Employee cannot be updated. Employee with given account id = " + employee.getId().getAccountId() + "and individual id = " + employee.getId().getIndividualId() + " doesn't exist"); });
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping(path = "/employees/{accountId}/{individualId}")
+    public ResponseEntity<Void> deleteEmployee(@PathVariable("accountId") @Validated String accountId,
+                                               @PathVariable("individualId") @Validated String individualId) {
+        var employeeList = this.employeeService.findById(accountId,individualId);
+        employeeList.ifPresentOrElse(e -> this.employeeService.delete(accountId, individualId),
+                () -> { throw new IllegalArgumentException("Employee cannot be deleted. Employee with given id doesn't exist"); });
+        return ResponseEntity.accepted().build();
+    }
+
 }

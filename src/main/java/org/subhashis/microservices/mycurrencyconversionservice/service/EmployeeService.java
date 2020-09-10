@@ -20,7 +20,7 @@ public class EmployeeService {
     }
 
     public Optional<List<Employee>> findById(String accountId, String individualId) {
-        return employeeRepository.findByIdAccountIdAndIdIndividualId(accountId, individualId);
+        return employeeRepository.findByIdAccountIdAndIdIndividualId(accountId, individualId).stream().findAny();
     }
 
     public Optional<List<Employee>> findByAccountId(String accountId) {
@@ -35,7 +35,6 @@ public class EmployeeService {
         return employeeRepository.saveAll(employeeList);
     }
 
-    /*
     public int update(Employee employee) {
         return employeeRepository.update(employee.getName(),
                 employee.getAddress().getStreet(),
@@ -45,10 +44,9 @@ public class EmployeeService {
                 employee.getId().getAccountId(),
                 employee.getId().getIndividualId());
     }
-     */
 
-    public void delete(EmployeeIdentity id) {
-        employeeRepository.deleteByIdAccountIdAndIdIndividualId(id.getAccountId(), id.getIndividualId());
+    public void delete(String accountId, String individualId) {
+        employeeRepository.deleteByIdAccountIdAndIdIndividualId(accountId, individualId);
     }
 
     public void deleteAllInBatch() {
