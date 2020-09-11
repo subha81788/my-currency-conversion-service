@@ -5,10 +5,11 @@ import javax.validation.constraints.NotNull;
 
 @Entity
 public class Employee {
-    @NotNull
+    @NotNull(message = "Employee Id cannot be null")
     @EmbeddedId
     private EmployeeIdentity id;
 
+    @NotNull(message = "Employee name cannot be null")
     private String name;
 
     @Embedded

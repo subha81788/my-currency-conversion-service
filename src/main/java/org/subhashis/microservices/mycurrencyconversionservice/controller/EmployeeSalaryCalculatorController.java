@@ -15,7 +15,6 @@ import org.subhashis.microservices.mycurrencyconversionservice.exception.Employe
 import org.subhashis.microservices.mycurrencyconversionservice.model.Employee;
 import org.subhashis.microservices.mycurrencyconversionservice.service.EmployeeService;
 
-import javax.persistence.EntityNotFoundException;
 import javax.validation.constraints.NotNull;
 import java.net.URI;
 import java.util.List;
@@ -53,12 +52,13 @@ public class EmployeeSalaryCalculatorController {
         } else if(accId.isPresent() && indId.isPresent()) {
             accIdVal = accId.get();
             indIdVal = indId.get();
-        } else {
+        }
+        if(StringUtils.isEmpty(accIdVal.strip()) || StringUtils.isEmpty(indIdVal.strip())) {
             throw new IllegalArgumentException("AccountId or InvidualId is not specified");
         }
         logger.info("accountId=" + accIdVal + "\tindividualId=" + indIdVal);
         return this.employeeService.findById(accIdVal,indIdVal)
-                .orElseThrow(() -> new EntityNotFoundException("Requested employee not found")).get(0);
+                .orElseThrow(() -> new EmployeeNotFoundException("Requested employee not found"));
     }
 
     @GetMapping(path = "/employeesByAccountId/{accountId}")
@@ -67,7 +67,7 @@ public class EmployeeSalaryCalculatorController {
             throw new IllegalArgumentException("AccountId is not specified");
         }
         return this.employeeService.findByAccountId(accountId)
-                .orElseThrow(() -> new EntityNotFoundException("Requested employee account not found"));
+                .orElseThrow(() -> new EmployeeNotFoundException("Requested employee account not found"));
     }
 
     @PostMapping(path = "/employees",

@@ -19,8 +19,11 @@ public class EmployeeService {
         return employeeRepository.findAll();
     }
 
-    public Optional<List<Employee>> findById(String accountId, String individualId) {
-        return employeeRepository.findByIdAccountIdAndIdIndividualId(accountId, individualId).stream().findAny();
+    public Optional<Employee> findById(String accountId, String individualId) {
+        //////////////////
+        employeeRepository.getCurrencies(accountId, individualId).forEach(System.out::println);
+        //////////////////
+        return employeeRepository.findByIdAccountIdAndIdIndividualId(accountId, individualId);
     }
 
     public Optional<List<Employee>> findByAccountId(String accountId) {
@@ -35,7 +38,13 @@ public class EmployeeService {
         return employeeRepository.saveAll(employeeList);
     }
 
-    public int update(Employee employee) {
+    public Employee update(Employee employee) {
+        var emp = employeeRepository.findByIdAccountIdAndIdIndividualId(employee.getId().getAccountId(), employee.getId().getIndividualId()).get();
+        emp.setName(employee.getName());
+        emp.setAddress(employee.getAddress());
+        emp.setCurrency(employee.getCurrency());
+        return employeeRepository.save(emp);
+        /*
         return employeeRepository.update(employee.getName(),
                 employee.getAddress().getStreet(),
                 employee.getAddress().getCity(),
@@ -43,6 +52,7 @@ public class EmployeeService {
                 employee.getCurrency().getFullName(),
                 employee.getId().getAccountId(),
                 employee.getId().getIndividualId());
+         */
     }
 
     public void delete(String accountId, String individualId) {
