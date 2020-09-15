@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface EmployeeRepository extends JpaRepository<Employee,String> {
+public interface EmployeeRepositoryImpl extends JpaRepository<Employee,String> {
 
     @Query("from Employee e where e.id.accountId = :accountId and e.id.individualId = :individualId")
     public Optional<Employee> findByIdAccountIdAndIdIndividualId(@Param("accountId") String accountId, @Param("individualId") String individualId);
@@ -21,13 +21,17 @@ public interface EmployeeRepository extends JpaRepository<Employee,String> {
     @Query("from Employee e where e.id.accountId = :accountId")
     public Optional<List<Employee>> findByIdAccountId(@Param("accountId") String accountId);
 
-    @Query("select c.fullName From Employee e join e.currency c where e.id.accountId = :accountId and e.id.individualId = :individualId")
-    public List<String> getCurrencies(@Param("accountId") String accountId, @Param("individualId") String individualId);
+    @Query("select c.fullName from Employee e join e.currency c where e.id.accountId = :accountId and e.id.individualId = :individualId")
+    public String getCurrencyFullName(@Param("accountId") String accountId, @Param("individualId") String individualId);
 
-    /*
     @Modifying(clearAutomatically = true)
     @Transactional
-    @Query("update Employee e set e.name = :name, e.address.street = :street, e.address.city = :city, e.currency.symbol = :symbol, e.currency.fullName = :fullName where e.id.accountId = :accountId and e.id.individualId = :individualId")
+    @Query("update Employee e set e.address.street = :street where e.id.accountId = :accountId and e.id.individualId = :individualId")
+    public int updateStreetById(@Param("accountId") String accountId, @Param("individualId") String individualId, @Param("street") String street);
+
+    @Modifying(clearAutomatically = true)
+    @Transactional
+    @Query(nativeQuery = true, value = "update employee e set e.name = :name, e.address.street = :street, e.address.city = :city, e.currency.symbol = :symbol, e.currency.fullName = :fullName where e.id.accountId = :accountId and e.id.individualId = :individualId")
     public int update(@Param("name") String name,
                       @Param("street") String street,
                       @Param("city") String city,
@@ -35,7 +39,6 @@ public interface EmployeeRepository extends JpaRepository<Employee,String> {
                       @Param("fullName") String fullName,
                       @Param("accountId") String accountId,
                       @Param("individualId") String individualId);
-     */
 
     @Modifying
     @Transactional
